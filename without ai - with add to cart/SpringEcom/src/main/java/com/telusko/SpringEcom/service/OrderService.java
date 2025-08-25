@@ -73,26 +73,7 @@ public class OrderService {
         order.setItems(orderItems);
         Order savedOrder = orderRepo.save(order);
 
-        // Prepare order summary for vector embedding
-        StringBuilder contentToEmbed = new StringBuilder();
-        contentToEmbed.append("Order Summary:\n");
-        contentToEmbed.append("Order ID: ").append(savedOrder.getOrderId()).append("\n");
-        contentToEmbed.append("Customer: ").append(savedOrder.getCustomerName()).append("\n");
-        contentToEmbed.append("Email: ").append(savedOrder.getEmail()).append("\n");
-        contentToEmbed.append("Date: ").append(savedOrder.getOrderDate()).append("\n");
-        contentToEmbed.append("Status: ").append(savedOrder.getStatus()).append("\n");
-        contentToEmbed.append("Products:\n");
-
-
-        // List all products in the order
-        for (OrderItem item : savedOrder.getItems()) {
-            contentToEmbed.append("- ").append(item.getProduct().getName())
-                    .append(" x ").append(item.getQuantity())
-                    .append(" = ₹").append(item.getTotalPrice()).append("\n");
-        }
-
-
-        // Build response for each order item
+           // Build response for each order item
         List<OrderItemResponse> itemResponses = savedOrder.getItems().stream()
                 .map(i -> new OrderItemResponse(
                         i.getProduct().getName(),
