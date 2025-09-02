@@ -44,7 +44,7 @@ public class ProductService {
         if (image != null && !image.isEmpty()) {
             product.setImageName(image.getOriginalFilename());
             product.setImageType(image.getContentType());
-            product.setProductImage(image.getBytes());
+            product.setImageData(image.getBytes());
 
         }
 

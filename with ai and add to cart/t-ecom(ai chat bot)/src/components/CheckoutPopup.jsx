@@ -90,7 +90,7 @@ const CheckoutPopup = ({ show, handleClose, cartItems, totalPrice }) => {
               {cartItems.map((item) => (
                 <div key={item.id} className="d-flex mb-3 border-bottom pb-3">
                   <img
-                    src={convertBase64ToDataURL(item.productImage)}
+                    src={convertBase64ToDataURL(item.imageData)}
                     alt={item.name}
                     className="me-3 rounded"
                     style={{ width: '80px', height: '80px', objectFit: 'cover' }}

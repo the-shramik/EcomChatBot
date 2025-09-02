@@ -160,7 +160,7 @@ const Cart = () => {
                             <td>
                               <div className="d-flex align-items-center">
                                 <img
-                                  src={convertBase64ToDataURL(item.productImage)}
+                                  src={convertBase64ToDataURL(item.imageData)}
                                   alt={item.name}
                                   className="rounded me-3"
                                   width="80"

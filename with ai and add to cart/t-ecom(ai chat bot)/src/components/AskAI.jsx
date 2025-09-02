@@ -1,14 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import '@chatscope/chat-ui-kit-styles/dist/default/styles.min.css';
-import { MainContainer, ChatContainer, MessageList, Message, MessageInput, TypingIndicator } from '@chatscope/chat-ui-kit-react';
+import {
+  MainContainer,
+  ChatContainer,
+  MessageList,
+  Message,
+  MessageInput,
+  TypingIndicator
+} from '@chatscope/chat-ui-kit-react';
 
 function AskAi() {
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState(null);
 
+  // Prefer env var; fallback helps during local dev
+  const baseUrl = import.meta.env.VITE_BASE_URL ?? 'http://localhost:8080';
+
+  // Seed a welcome message once
   useEffect(() => {
-    // Initialize with the welcome message
     setMessages([
       {
         message: "Hello, I'm your personal AI!",
@@ -18,63 +28,70 @@ function AskAi() {
     ]);
   }, []);
 
-  const baseUrl = import.meta.env.VITE_BASE_URL;
-
-  const handleSend = async (message) => {
+  const handleSend = useCallback(async (messageText) => {
     const userMessage = {
-        message: message,
-        sender: "user",
-        direction: "outgoing"
+      message: messageText,
+      sender: "user",
+      direction: "outgoing"
     };
-  
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
-    
-    // Set typing indicator
+
+    setMessages(prev => [...prev, userMessage]);
     setIsTyping(true);
     setError(null);
 
     try {
-      await processMessageToChatGPT(message);
+      await processMessageToChatGPT(messageText);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Something went wrong.');
     } finally {
       setIsTyping(false);
     }
-  };
+  }, [baseUrl]);
 
-  async function processMessageToChatGPT(chatMessages) {
-    try {
-      const response = await fetch(`${baseUrl}/api/chat/ask?message=${encodeURIComponent(chatMessages)}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        },
-      });
+  async function processMessageToChatGPT(chatMessage) {
+    // Don’t send JSON header for a GET returning plain text
+    const url = `${baseUrl}/api/chat/ask?message=${encodeURIComponent(chatMessage)}`;
 
-      console.log(response, 'AskAi response');
+    const response = await fetch(url, {
+      method: "GET"
+      // headers: { } // no Content-Type for GET
+    });
 
-      if (!response.ok) {
+    if (!response.ok) {
+      // Try parse JSON error, else read plain text
+      let errMsg = 'Failed to get response from TeluskoBot';
+      try {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to get response from TeluskoBot');
+        errMsg = errorData.error?.message || errorData.message || errMsg;
+      } catch {
+        try {
+          errMsg = await response.text();
+        } catch { /* ignore */ }
       }
-
-      const data = await response.json();
-      
-      // Add the bot's response to messages
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        {
-          message: data.response,
-          sender: "ChatGPT",
-          direction: "incoming"
-        }
-      ]);
-
-    } catch (error) {
-      console.error("Error processing message:", error);
-      throw error;
+      throw new Error(errMsg);
     }
+
+    // Try JSON first; fallback to text
+    let botMessageText;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await response.json();
+      // Support both { response: "..." } and raw "..."
+      botMessageText = typeof data === 'string'
+        ? data
+        : (data.response ?? JSON.stringify(data));
+    } else {
+      botMessageText = await response.text();
+    }
+
+    setMessages(prev => [
+      ...prev,
+      {
+        message: botMessageText,
+        sender: "ChatGPT",
+        direction: "incoming"
+      }
+    ]);
   }
 
   return (
@@ -88,35 +105,40 @@ function AskAi() {
                 AI Assistant
               </h5>
             </div>
+
             <div className="card-body p-0" style={{ height: "calc(100% - 56px)" }}>
               <MainContainer style={{ height: "100%" }}>
-                <ChatContainer style={{ height: "100%" }}>       
-                  <MessageList 
-                    scrollBehavior="smooth" 
+                <ChatContainer style={{ height: "100%" }}>
+                  <MessageList
+                    scrollBehavior="smooth"
                     typingIndicator={isTyping ? <TypingIndicator content="AI is typing" /> : null}
                   >
-                    {messages.map((message, i) => (
-                      <Message 
-                        key={i} 
-                        model={message}
-                        className={message.error ? "error-message" : ""}
+                    {messages.map((m, i) => (
+                      <Message
+                        key={i}
+                        model={m}
+                        className={m.error ? "error-message" : ""}
                       />
                     ))}
                   </MessageList>
-                  {error && (
-                    <div className="alert alert-danger m-2" role="alert">
-                      <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                      {error}
-                    </div>
-                  )}
-                  <MessageInput 
-                    placeholder="Type your message here..." 
+
+                  <MessageInput
+                    placeholder="Type your message here..."
                     onSend={handleSend}
                     attachButton={false}
-                  />        
+                    disabled={isTyping} // optional UX: prevent spamming while typing
+                  />
                 </ChatContainer>
               </MainContainer>
             </div>
+
+            {/* Show errors OUTSIDE ChatContainer to satisfy Chatscope's children rules */}
+            {error && (
+              <div className="alert alert-danger m-3 mb-4" role="alert">
+                <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                {error}
+              </div>
+            )}
           </div>
         </div>
       </div>

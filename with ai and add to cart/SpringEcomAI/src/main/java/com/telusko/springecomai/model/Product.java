@@ -29,7 +29,7 @@ public class Product {
     private String imageName;
     private String imageType;
     @Lob
-    private byte[] productImage;
+    private byte[] imageData;
     public Product(int id){
         this.id = id;
     }

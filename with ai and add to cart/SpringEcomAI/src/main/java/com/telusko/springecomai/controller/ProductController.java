@@ -41,7 +41,7 @@ public class ProductController {
     public ResponseEntity<byte[]> getImageByProductId(@PathVariable int productId){
         Product product = productService.getProductById(productId);
         if(product.getId() > 0)
-            return new ResponseEntity<>(product.getProductImage(), HttpStatus.OK);
+            return new ResponseEntity<>(product.getImageData(), HttpStatus.OK);
         else
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }

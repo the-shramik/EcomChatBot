@@ -64,7 +64,7 @@ public class ChatBotService {
                 SearchRequest.builder()
                         .query(query)
                         .topK(5)                       // get top 5 most similar documents
-                        .similarityThreshold(0.7f)     // filter documents with similarity score below threshold
+//                        .similarityThreshold(0.7f)     // filter documents with similarity score below threshold
                         .build()
         );
 

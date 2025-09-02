@@ -74,7 +74,7 @@ const SearchResults = () => {
               <div key={product.id} className="col">
                 <div className="card h-100 shadow-sm">
                   <img 
-                    src={convertBase64ToDataURL(product.productImage)} 
+                    src={convertBase64ToDataURL(product.imageData)} 
                     className="card-img-top p-3" 
                     alt={product.name}
                     style={{ height: "200px", objectFit: "contain", cursor: "pointer" }}

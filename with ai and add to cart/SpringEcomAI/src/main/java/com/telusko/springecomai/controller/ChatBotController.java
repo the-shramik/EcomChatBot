@@ -1,6 +1,5 @@
 package com.telusko.springecomai.controller;
 
-import com.telusko.springecomai.model.dto.BotResponse;
 import com.telusko.springecomai.service.ChatBotService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +14,8 @@ public class ChatBotController {
     private ChatBotService chatBotService;
 
     @GetMapping("/ask")
-    public ResponseEntity<BotResponse> askBot(@RequestParam String message) {
+    public ResponseEntity<String> askBot(@RequestParam String message) {
         String reply = chatBotService.getBotResponse(message);
-        return ResponseEntity.ok(new BotResponse(reply));
+        return ResponseEntity.ok(reply);
     }
 }
